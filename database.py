@@ -6,3 +6,4 @@ try:
     print("Successfully connected to MongoDB")
 except Exception as e:
     print(f"Error connecting to MongoDB: {e}")
+
