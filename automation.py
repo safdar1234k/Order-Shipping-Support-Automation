@@ -347,3 +347,56 @@ def process_address_change_request(customer_id, order_id, new_address):
         "message": "Your address-change request has been submitted for staff review. The address has not been changed yet.",
         "review_request": review_request
     }
+
+
+def process_delivery_dispute(customer_id, order_id, details):
+    """Escalate a delivered-but-not-received report for human review."""
+
+    validation_result = validate_support_request(customer_id, order_id)
+
+    if not validation_result["success"]:
+        return {
+            "success": False,
+            "message": validation_result["message"],
+            "review_request": None
+        }
+
+    order = validation_result["order"]
+    order_status = (order.get("status") or "").lower()
+
+    if order_status != "delivered":
+        return {
+            "success": False,
+            "message": (
+                "This workflow is for orders marked as delivered. "
+                "Please use the tracking or delayed-order workflow instead."
+            ),
+            "review_request": None
+        }
+
+    if not isinstance(details, str) or not details.strip():
+        return {
+            "success": False,
+            "message": "Please provide details about the delivery issue.",
+            "review_request": None
+        }
+
+    review_request = create_review_request(
+        customer_id=customer_id,
+        order_id=order_id,
+        request_type="delivered_not_received",
+        details=(
+            f"Customer reports that the order was marked delivered "
+            f"but was not received. Details: {details.strip()}. "
+            "Staff investigation is required."
+        )
+    )
+
+    return {
+        "success": True,
+        "message": (
+            "Your delivery dispute has been submitted for staff "
+            "investigation. No conclusion has been reached yet."
+        ),
+        "review_request": review_request
+    }
