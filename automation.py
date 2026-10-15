@@ -1,4 +1,6 @@
+from datetime import datetime, date
 from database import db
+from review_queue import create_review_request
 
 order_collection = db['orders']
 
@@ -88,7 +90,7 @@ def validate_support_request(customer_id, order_id):
 #Otherwise, retrieve the relevant tracking event from MongoDB using the actual field names in your collection.
 #If no tracking event exists, report that tracking information was not found. Do not invent a status.
 
-tracking_events_collection = db["tracking events"]
+tracking_events_collection = db['tracking events']
 
 
 def get_tracking_status(order):
@@ -135,3 +137,213 @@ def get_tracking_status(order):
         "tracking_number": tracking_number
     }
 
+#process_tracking_request()
+#This function will coordinate the existing components:
+#1. Validate the customer and order using validate_support_request().
+#2. If validation fails, return the failure result without querying tracking data.
+#####3. If validation succeeds, call get_tracking_status() with the validated order.
+#4. Return a consistent result containing the validation outcome and tracking information.#
+
+def process_tracking_request(customer_id, order_id):
+    """Process a tracking request for a given customer and order."""
+
+    # Step 1: Validate the customer and order
+    validation_result = validate_support_request(customer_id, order_id)
+
+    # Step 2: If validation fails, return the failure result
+    if not validation_result["success"]:
+        return {
+            "success": False,
+            "message": validation_result["message"],
+            "tracking_status": None,
+            "tracking_number": None
+        }
+
+    # Step 3: If validation succeeds, call get_tracking_status() with the validated order
+    order = validation_result["order"]
+    tracking_result = get_tracking_status(order)
+
+    # Step 4: Return a consistent result containing the validation outcome and tracking information
+    return {
+        "success": tracking_result["success"],
+        "message": tracking_result["message"],
+        "tracking_status": tracking_result.get("tracking_status"),
+        "tracking_number": tracking_result.get("tracking_number")
+    }
+
+#test = process_tracking_request("C100", "O10003")
+#print(test)
+
+
+
+
+def process_delayed(customer_id, order_id):
+    """Determine whether a validated order is delayed."""
+
+    validation_result = validate_support_request(customer_id, order_id)
+
+    if not validation_result["success"]:
+        return {
+            "success": False,
+            "message": validation_result["message"],
+            "order_status": None,
+            "is_delayed": None
+        }
+
+    order = validation_result["order"]
+    order_status = (order.get("status") or "").lower()
+
+    if order_status == "delivered":
+        return {
+            "success": True,
+            "message": "Order has already been delivered.",
+            "order_status": order_status,
+            "is_delayed": False
+        }
+
+    expected_date = order.get("expected_delivery_date")
+
+    if not expected_date:
+        return {
+            "success": False,
+            "message": "Expected delivery date is unavailable. Manual review is required.",
+            "order_status": order_status,
+            "is_delayed": None
+        }
+
+    try:
+        if isinstance(expected_date, datetime):
+            expected_date = expected_date.date()
+        elif isinstance(expected_date, date):
+            pass
+        elif isinstance(expected_date, str):
+            expected_date = date.fromisoformat(expected_date)
+        else:
+            raise ValueError("Unsupported date format")
+
+    except (ValueError, TypeError):
+        return {
+            "success": False,
+            "message": "Expected delivery date is invalid. Manual review is required.",
+            "order_status": order_status,
+            "is_delayed": None
+        }
+
+    today = datetime.now().date()
+    is_delayed = expected_date < today
+
+    if is_delayed:
+        message = "Order is past its expected delivery date. Further investigation may be required."
+        if is_delayed:
+            review_request = create_review_request(
+        customer_id=customer_id,
+        order_id=order_id,
+        request_type="delayed_order",
+        details="Order is past its expected delivery date and requires investigation."
+    )
+    else:
+        message = "Order is not yet past its expected delivery date."
+
+    return {
+        "success": True,
+        "message": message,
+        "order_status": order_status,
+        "is_delayed": is_delayed
+    }
+
+#test = process_delayed("C1001", "O10002")
+#print(test)
+
+#process_cancellation_request(customer_id, order_id).
+#It should:
+#1. Call validate_support_request(customer_id, order_id).
+#2. If validation fails, return the existing failure message without creating a review request.
+#3. If the order is already delivered, reject the cancellation request and do not create a review record.
+#4. Otherwise, create a review request using create_review_request() with:
+ #  - request_type="cancellation"
+  # - A clear explanation that the customer has requested cancellation and staff approval is required.
+#5. Return a consistent result with success, message, and review_request
+
+def process_cancellation_request(customer_id, order_id):
+    """Submit a cancellation request for human review."""
+
+    # Step 1: Validate the customer and order
+    validation_result = validate_support_request(customer_id, order_id)
+
+    if not validation_result["success"]:
+        return {
+            "success": False,
+            "message": validation_result["message"],
+            "review_request": None
+        }
+
+    # Step 2: Retrieve the validated order
+    order = validation_result["order"]
+    order_status = (order.get("status") or "").lower()
+
+    # Step 3: Reject cancellation for delivered orders
+    if order_status == "delivered":
+        return {
+            "success": False,
+            "message": "This order has already been delivered. Cancellation cannot be requested through this workflow.",
+            "review_request": None
+        }
+
+    # Step 4: Create a human-review request
+    review_request = create_review_request(
+        customer_id=customer_id,
+        order_id=order_id,
+        request_type="cancellation",
+        details="Customer requested order cancellation. Staff review and approval are required."
+    )
+
+    # Step 5: Return the result without claiming cancellation is complete
+    return {
+        "success": True,
+        "message": "Your cancellation request has been submitted and is awaiting staff review. The order has not been cancelled yet.",
+        "review_request": review_request
+    }
+
+#test = process_cancellation_request("C1001", "O10002")
+#print(test)
+def process_address_change_request(customer_id, order_id, new_address):
+    """Submit an address-change request for human review."""
+
+    validation_result = validate_support_request(customer_id, order_id)
+
+    if not validation_result["success"]:
+        return {
+            "success": False,
+            "message": validation_result["message"],
+            "review_request": None
+        }
+
+    order = validation_result["order"]
+    order_status = (order.get("status") or "").lower()
+
+    if order_status == "delivered":
+        return {
+            "success": False,
+            "message": "The order has already been delivered. An address change cannot be requested through this workflow.",
+            "review_request": None
+        }
+
+    if not isinstance(new_address, str) or not new_address.strip():
+        return {
+            "success": False,
+            "message": "A valid new address is required.",
+            "review_request": None
+        }
+
+    review_request = create_review_request(
+        customer_id=customer_id,
+        order_id=order_id,
+        request_type="address_change",
+        details=f"Customer requested an address change to: {new_address.strip()}. Staff review and approval are required."
+    )
+
+    return {
+        "success": True,
+        "message": "Your address-change request has been submitted for staff review. The address has not been changed yet.",
+        "review_request": review_request
+    }
