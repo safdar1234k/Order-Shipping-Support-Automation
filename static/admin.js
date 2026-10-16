@@ -427,3 +427,251 @@ document.addEventListener("DOMContentLoaded", () => {
         renderAll();
     }
 
+   function tableBody(selector) {
+        const element = $(selector);
+        if (!element) return null;
+
+        if (element.tagName === "TBODY") return element;
+
+        let body = element.querySelector("tbody");
+        if (!body) {
+            body = document.createElement("tbody");
+            element.appendChild(body);
+        }
+
+        return body;
+    }
+
+    function renderQueue() {
+        const body = tableBody("#queueTable");
+        if (!body) return;
+
+        const items = cases.filter(item =>
+            ["Pending Review", "Escalated", "Awaiting Customer"].includes(item.status)
+        );
+
+        body.innerHTML = items.length ? items.map(item => `
+            <tr>
+                <td>${escapeHTML(item.id)}</td>
+                <td>${escapeHTML(item.customer)}</td>
+                <td>${escapeHTML(item.type)}</td>
+                <td>${escapeHTML(item.order)}</td>
+                <td>${badge(item.status)}</td>
+                <td><button type="button" class="btn table-open" data-open-case="${escapeHTML(item.id)}">Review</button></td>
+            </tr>
+        `).join("") : `<tr><td colspan="6">No cases in the review queue.</td></tr>`;
+
+        body.querySelectorAll("[data-open-case]").forEach(button => {
+            button.addEventListener("click", () => {
+                selectedId = button.dataset.openCase;
+                showView("dashboard");
+                renderAll();
+            });
+        });
+    }
+
+    function renderOrders() {
+        const body = tableBody("#ordersTable");
+        if (!body) return;
+
+        const uniqueOrders = [...new Map(cases.map(item => [item.order, item])).values()];
+
+        body.innerHTML = uniqueOrders.map(item => `
+            <tr>
+                <td>${escapeHTML(item.order)}</td>
+                <td>${escapeHTML(item.customer)}</td>
+                <td>${escapeHTML(item.orderStatus)}</td>
+                <td>${escapeHTML(item.expected)}</td>
+                <td>${escapeHTML(item.tracking)}</td>
+                <td><button type="button" class="btn table-open" data-open-case="${escapeHTML(item.id)}">View Case</button></td>
+            </tr>
+        `).join("");
+
+        bindOpenCaseButtons(body);
+    }
+
+    function renderCustomers() {
+        const body = tableBody("#customersTable");
+        if (!body) return;
+
+        const uniqueCustomers = [...new Map(cases.map(item => [item.email, item])).values()];
+
+        body.innerHTML = uniqueCustomers.map(item => `
+            <tr>
+                <td>${escapeHTML(item.customer)}</td>
+                <td>${escapeHTML(item.email)}</td>
+                <td>${escapeHTML(item.order)}</td>
+                <td>${escapeHTML(item.id)}</td>
+                <td>${badge(item.status)}</td>
+            </tr>
+        `).join("");
+    }
+
+    function renderSupport() {
+        const body = tableBody("#supportTable");
+        if (!body) return;
+
+        body.innerHTML = cases.map(item => `
+            <tr>
+                <td>${escapeHTML(item.id)}</td>
+                <td>${escapeHTML(item.type)}</td>
+                <td>${escapeHTML(item.customer)}</td>
+                <td>${escapeHTML(item.priority)}</td>
+                <td>${badge(item.status)}</td>
+                <td><button type="button" class="btn table-open" data-open-case="${escapeHTML(item.id)}">Manage</button></td>
+            </tr>
+        `).join("");
+
+        bindOpenCaseButtons(body);
+    }
+
+    function bindOpenCaseButtons(container) {
+        container.querySelectorAll("[data-open-case]").forEach(button => {
+            button.addEventListener("click", () => {
+                selectedId = button.dataset.openCase;
+                showView("dashboard");
+                renderAll();
+            });
+        });
+    }
+
+    function renderAnalytics() {
+        const container = $("#typeAnalytics");
+        if (!container) return;
+
+        const types = [...new Set(cases.map(item => item.type))];
+
+        container.innerHTML = types.map(type => {
+            const count = cases.filter(item => item.type === type).length;
+            const percent = cases.length ? Math.round(count / cases.length * 100) : 0;
+
+            return `
+                <div class="analytics-row">
+                    <div class="caseline">
+                        <span>${escapeHTML(type)}</span>
+                        <strong>${count}</strong>
+                    </div>
+                    <div class="analytics-track">
+                        <div class="analytics-bar" style="width:${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function renderActivity() {
+        const container = $("#activityList");
+        if (!container) return;
+
+        container.innerHTML = activity.map(item => `
+            <div class="activity-row">
+                <div>
+                    <strong>${escapeHTML(item.text)}</strong>
+                    <p>${escapeHTML(item.detail)}</p>
+                </div>
+                <span class="muted">${escapeHTML(item.time.toLocaleTimeString())}</span>
+            </div>
+        `).join("");
+    }
+
+    function showView(view) {
+        activeView = view;
+
+        $$(".view").forEach(element => {
+            element.classList.toggle("hidden", element.id !== view);
+        });
+
+        $$("[data-view]").forEach(link => {
+            link.classList.toggle("active", link.dataset.view === view);
+        });
+
+        const title = $("#pageTitle");
+        if (title) {
+            title.textContent = ({
+                dashboard: "Dashboard",
+                queue: "Review Queue",
+                orders: "Orders",
+                customers: "Customers",
+                support: "Support Requests",
+                analytics: "Analytics",
+                settings: "Settings"
+            })[view] || "Admin Panel";
+        }
+    }
+
+    function renderAll() {
+        renderStats();
+        renderCaseList();
+        renderCaseDetail();
+        renderQueue();
+        renderOrders();
+        renderCustomers();
+        renderSupport();
+        renderActivity();
+    }
+
+    $$("[data-view]").forEach(link => {
+        link.addEventListener("click", event => {
+            event.preventDefault();
+            showView(link.dataset.view);
+        });
+    });
+
+    $$("[data-goto]").forEach(button => {
+        button.addEventListener("click", () => showView(button.dataset.goto));
+    });
+
+    $("#globalSearch")?.addEventListener("input", event => {
+        searchTerm = event.target.value;
+        renderCaseList();
+    });
+
+    $("#globalSearch")?.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+
+        const match = cases.find(item => [
+            item.id,
+            item.customer,
+            item.order,
+            item.type
+        ].join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
+
+        if (match) {
+            selectedId = match.id;
+            showView("dashboard");
+            renderAll();
+        } else {
+            showView("queue");
+            renderQueue();
+        }
+    });
+
+    $("#statusFilter")?.addEventListener("change", event => {
+        statusFilter = event.target.value;
+        renderCaseList();
+    });
+
+    $("#typeFilter")?.addEventListener("change", event => {
+        typeFilter = event.target.value;
+        renderCaseList();
+    });
+
+    $("#showWarning")?.addEventListener("change", event => {
+        const notice = $("#demoNotice");
+        if (notice) notice.classList.toggle("hidden", !event.target.checked);
+    });
+
+    $("#saveSettings")?.addEventListener("click", () => {
+        const name = $("#nameInput")?.value.trim() || "Support Admin";
+        const message = $("#settingsMessage");
+
+        const profileName = $(".staff-profile .profile-name");
+        if (profileName) profileName.textContent = name;
+
+        if (message) message.textContent = "Settings updated for this session.";
+        logActivity("Admin settings updated");
+    });
+
+    showView("dashboard");
+    renderAll();
+});
