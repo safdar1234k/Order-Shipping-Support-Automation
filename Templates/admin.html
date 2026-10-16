@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderSupport | Admin Control Panel</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="layout">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">◇</div>
+                <div>
+                    <h2>OrderSupport</h2>
+                    <p>Admin Control Panel</p>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <button class="nav-link active" data-view="dashboard">Dashboard</button>
+                <button class="nav-link" data-view="queue">
+                    Review Queue <span id="navCount">4</span>
+                </button>
+                <button class="nav-link" data-view="orders">Orders</button>
+                <button class="nav-link" data-view="customers">Customers</button>
+                <button class="nav-link" data-view="support">Support Requests</button>
+                <button class="nav-link" data-view="analytics">Analytics</button>
+                <button class="nav-link" data-view="settings">Settings</button>
+            </nav>
+
+            <div class="system-status">
+                <span class="status-indicator"></span>
+                Demo System Online
+                <p>Frontend prototype · Backend not connected</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <h1 id="pageTitle">Good morning, Alex</h1>
+                    <p id="pageSubtitle">
+                        Manage cases, make decisions, and coordinate support operations.
+                    </p>
+                </div>
+
+                <div class="topbar-actions">
+                    <input
+                        type="search"
+                        id="globalSearch"
+                        placeholder="Search requests, orders, customers..."
+                    >
+                    <div class="staff-profile">
+                        <div class="avatar">AS</div>
+                        <div>
+                            <strong id="staffName">Alex Smith</strong>
+                            <p>Staff Member</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content">
+
+                <div class="demo-notice" id="demoNotice">
+                    Demo mode: All records are fictional. Actions update this interface only.
+                    No real orders are changed and no customer messages are sent.
+                </div>
+
+                <section class="view active" id="view-dashboard">
+
+                    <div class="stats-grid">
+                        <article class="stat-card">
+                            <p>Pending Review</p>
+                            <h2 id="pendingStat">4</h2>
+                            <span>Requires a decision</span>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>In Progress</p>
+                            <h2 id="progressStat">1</h2>
+                            <span>Under investigation</span>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>Escalated</p>
+                            <h2 id="escalatedStat">1</h2>
+                            <span>Human attention required</span>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>Resolved</p>
+                            <h2 id="resolvedStat">1</h2>
+                            <span>Recorded outcomes</span>
+                        </article>
+                    </div>
+
+                    <div class="workspace">
+
+                        <section class="panel case-panel">
+                            <div class="panel-header">
+                                <h2>Operational Case Queue</h2>
+                                <button class="btn" data-goto="queue">View All</button>
+                            </div>
+
+                            <div class="filters">
+                                <input type="search" id="caseSearch" placeholder="Search cases">
+
+                                <select id="typeFilter">
+                                    <option value="All">All Types</option>
+                                    <option value="Cancellation">Cancellation</option>
+                                    <option value="Delayed Order">Delayed Order</option>
+                                    <option value="Address Change">Address Change</option>
+                                    <option value="Delivery Dispute">Delivery Dispute</option>
+                                </select>
+
+                                <select id="statusFilter">
+                                    <option value="All">All Statuses</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Awaiting Customer">Awaiting Customer</option>
+                                    <option value="Escalated">Escalated</option>
+                                    <option value="Resolved">Resolved</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </div>
+
+                            <div id="caseList" class="case-list"></div>
+                            <p id="caseCount" class="muted"></p>
+                        </section>
+
+                        <div class="case-workspace">
+
+                            <section class="panel">
+                                <div class="panel-header">
+                                    <h2>Case Management Workspace</h2>
+                                    <span class="badge">Staff Tools</span>
+                                </div>
+
+                                <div id="caseDetail">
+                                    <p>Select a case to review its details.</p>
+                                </div>
+                            </section>
+
+                            <section class="panel">
+                                <div class="panel-header">
+                                    <h2>Recent Staff Activity</h2>
+                                    <button class="btn" id="clearActivity">Clear Log</button>
+                                </div>
+
+                                <div id="activityList"></div>
+                            </section>
+
+                        </div>
+                    </div>
+                </section>
+
+                <section class="view" id="view-queue">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h2>Review Queue</h2>
+                            <span id="fullQueueCount" class="muted"></span>
+                        </div>
+
+                        <div class="filters">
+                            <input type="search" id="fullQueueSearch" placeholder="Search requests">
+
+                            <select id="fullQueueStatus">
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Awaiting Customer">Awaiting Customer</option>
+                                <option value="Escalated">Escalated</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Type</th>
+                                        <th>Customer</th>
+                                        <th>Order</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="queueTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
