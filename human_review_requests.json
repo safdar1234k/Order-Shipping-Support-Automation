@@ -30,5 +30,15 @@
         "details": "Customer requested order cancellation. Staff review and approval are required.",
         "status": "pending",
         "created_at": "2026-10-15T15:41:38.504496+00:00"
+    },
+    {
+        "request_id": "a2db33b4-82eb-4b8b-81f0-3633752edc64",
+        "customer_id": "CUST_TEST",
+        "order_id": "ORD_TEST",
+        "request_type": "cancellation",
+        "details": "Test cancellation request.",
+        "status": "approved",
+        "created_at": "2026-10-15T19:08:24.093609+00:00",
+        "updated_at": "2026-10-15T19:08:24.195583+00:00"
     }
 ]
