@@ -198,3 +198,162 @@
                     </section>
                 </section>
 
+
+                                <section class="view" id="view-orders">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h2>Orders Directory</h2>
+                            <span class="badge">Mock Data</span>
+                        </div>
+
+                        <input type="search" id="orderSearch" placeholder="Search orders or customers">
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th>Expected Delivery</th>
+                                        <th>Related Case</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="view" id="view-customers">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h2>Customers Directory</h2>
+                            <span class="badge">Mock Data</span>
+                        </div>
+
+                        <input type="search" id="customerSearch" placeholder="Search customers">
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Customer ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Cases</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customersTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="view" id="view-support">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h2>Support Requests</h2>
+                            <span class="muted">All Request Categories</span>
+                        </div>
+
+                        <div class="filters">
+                            <input type="search" id="supportSearch" placeholder="Search requests">
+
+                            <select id="supportType">
+                                <option value="All">All Types</option>
+                                <option value="Cancellation">Cancellation</option>
+                                <option value="Delayed Order">Delayed Order</option>
+                                <option value="Address Change">Address Change</option>
+                                <option value="Delivery Dispute">Delivery Dispute</option>
+                            </select>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Type</th>
+                                        <th>Summary</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supportTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="view" id="view-analytics">
+                    <div class="stats-grid">
+                        <article class="stat-card">
+                            <p>Total Cases</p>
+                            <h2 id="totalCases">7</h2>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>Active Cases</p>
+                            <h2 id="activeCases">5</h2>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>Escalated Cases</p>
+                            <h2 id="analyticsEscalated">1</h2>
+                        </article>
+
+                        <article class="stat-card">
+                            <p>Closed Cases</p>
+                            <h2 id="closedCases">1</h2>
+                        </article>
+                    </div>
+
+                    <section class="panel">
+                        <h2>Request Types</h2>
+                        <div id="typeAnalytics"></div>
+                        <p class="muted">Statistics are calculated from fictional demo records.</p>
+                    </section>
+                </section>
+
+                <section class="view" id="view-settings">
+                    <section class="panel">
+                        <h2>Control Panel Settings</h2>
+
+                        <label class="setting-row">
+                            Confirm before closing cases
+                            <input type="checkbox" id="confirmClose" checked>
+                        </label>
+
+                        <label class="setting-row">
+                            Show demo warning
+                            <input type="checkbox" id="showWarning" checked>
+                        </label>
+
+                        <label class="setting-field">
+                            Staff display name
+                            <input type="text" id="nameInput" value="Alex Smith">
+                        </label>
+
+                        <button class="btn primary" id="saveSettings">
+                            Apply Preview Settings
+                        </button>
+
+                        <p id="settingsMessage" class="muted"></p>
+                    </section>
+                </section>
+
+                <footer class="footer">
+                    <span>Secure · Customer-focused · Efficient</span>
+                    <span>Frontend Prototype · Flask/MongoDB Not Connected</span>
+                </footer>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
