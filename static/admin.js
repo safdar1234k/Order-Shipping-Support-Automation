@@ -272,3 +272,158 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+
+    
+    function renderCaseDetail() {
+        const container = $("#caseDetail");
+        if (!container) return;
+
+        const item = selectedCase();
+
+        if (!item) {
+            container.innerHTML = `<p class="empty-state">Select a support case to view its details.</p>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="panel-header">
+                <div>
+                    <h3>${escapeHTML(item.id)} — ${escapeHTML(item.type)}</h3>
+                    <p>${escapeHTML(item.summary)}</p>
+                </div>
+                ${badge(item.status)}
+            </div>
+
+            <div class="info-grid">
+                <div class="info">
+                    <span>Customer</span>
+                    <strong>${escapeHTML(item.customer)}</strong>
+                </div>
+                <div class="info">
+                    <span>Email</span>
+                    <strong>${escapeHTML(item.email)}</strong>
+                </div>
+                <div class="info">
+                    <span>Order</span>
+                    <strong>${escapeHTML(item.order)}</strong>
+                </div>
+                <div class="info">
+                    <span>Order status</span>
+                    <strong>${escapeHTML(item.orderStatus)}</strong>
+                </div>
+                <div class="info">
+                    <span>Expected delivery</span>
+                    <strong>${escapeHTML(item.expected)}</strong>
+                </div>
+                <div class="info">
+                    <span>Tracking reference</span>
+                    <strong>${escapeHTML(item.tracking)}</strong>
+                </div>
+            </div>
+
+            <div class="section">
+                <h4>Case description</h4>
+                <p>${escapeHTML(item.detail)}</p>
+            </div>
+
+            <div class="section">
+                <h4>Internal notes</h4>
+                <div class="note-list">
+                    ${item.notes.length
+                        ? item.notes.map(note => `<p class="note">${escapeHTML(note)}</p>`).join("")
+                        : `<p class="muted">No internal notes yet.</p>`
+                    }
+                </div>
+                <label for="noteInput">Add an internal note</label>
+                <textarea id="noteInput" rows="3" placeholder="Record investigation findings..."></textarea>
+                <button type="button" class="btn" id="addNote">Add Note</button>
+            </div>
+
+            <div class="section">
+                <h4>Customer response draft</h4>
+                <textarea id="replyInput" rows="4"
+                    placeholder="Write a response for the customer...">${escapeHTML(item.reply)}</textarea>
+                <div class="actions">
+                    <button type="button" class="btn" id="saveDraft">Save Draft</button>
+                    <button type="button" class="btn" id="previewDraft">Preview Draft</button>
+                </div>
+                <div id="replyPreview" class="reply-preview hidden"></div>
+                <p class="muted">Demo mode: drafts are not sent to customers.</p>
+            </div>
+
+            <div class="section">
+                <h4>Case actions</h4>
+                <div class="actions">
+                    <button type="button" class="btn" data-action="In Progress">Start Investigation</button>
+                    <button type="button" class="btn" data-action="Pending Review">Return to Review</button>
+                    <button type="button" class="btn" data-action="Awaiting Customer">Await Customer</button>
+                    <button type="button" class="btn" data-action="Escalated">Escalate</button>
+                    <button type="button" class="btn" data-action="Resolved">Resolve Case</button>
+                    <button type="button" class="btn" data-action="Rejected">Reject Request</button>
+                </div>
+                <p class="muted">These actions update demo state only. Cancellation and address changes are not performed.</p>
+            </div>
+        `;
+
+        $("#addNote")?.addEventListener("click", addNote);
+        $("#saveDraft")?.addEventListener("click", saveDraft);
+        $("#previewDraft")?.addEventListener("click", previewDraft);
+
+        container.querySelectorAll("[data-action]").forEach(button => {
+            button.addEventListener("click", () => changeStatus(button.dataset.action));
+        });
+    }
+
+    function addNote() {
+        const item = selectedCase();
+        const input = $("#noteInput");
+        const note = input?.value.trim();
+
+        if (!item || !note) {
+            alert("Select a case and enter a note first.");
+            return;
+        }
+
+        item.notes.push(note);
+        logActivity(`Internal note added to ${item.id}`);
+        renderCaseDetail();
+    }
+
+    function saveDraft() {
+        const item = selectedCase();
+        const input = $("#replyInput");
+
+        if (!item || !input) return;
+
+        item.reply = input.value.trim();
+        logActivity(`Customer response draft saved for ${item.id}`);
+
+        alert("Draft saved in this browser session. No message was sent.");
+    }
+
+    function previewDraft() {
+        const item = selectedCase();
+        const input = $("#replyInput");
+        const preview = $("#replyPreview");
+
+        if (!item || !input || !preview) return;
+
+        item.reply = input.value.trim();
+        preview.textContent = item.reply || "The response draft is empty.";
+        preview.classList.remove("hidden");
+    }
+
+    function changeStatus(newStatus) {
+        const item = selectedCase();
+        if (!item) return;
+
+        if (["Resolved", "Rejected"].includes(newStatus) && $("#confirmClose")?.checked) {
+            const confirmed = confirm(`Confirm changing ${item.id} to "${newStatus}"?`);
+            if (!confirmed) return;
+        }
+
+        item.status = newStatus;
+        logActivity(`${item.id} status changed to ${newStatus}`);
+        renderAll();
+    }
+
